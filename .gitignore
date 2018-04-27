@@ -1,2 +1,9 @@
 .ipynb_checkpoints/
 tensorboard/
+/#*
+*~
+MNIST_data/
+pretrained_model/
+trained_models/
+notebook-images/
+generated_images/
