@@ -3,7 +3,7 @@ tensorboard/
 /#*
 *~
 MNIST_data/
-pretrained_model/
+pretrained-model/
 trained_models/
 notebook-images/
 generated_images/
