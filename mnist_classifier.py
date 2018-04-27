@@ -28,12 +28,20 @@ from __future__ import print_function
 import argparse
 import sys
 import tempfile
+import pdb
+import numpy as np
 
 from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
 
 FLAGS = None
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--data_dir', type=str,
+                      default='/tmp/tensorflow/mnist/input_data',
+                      help='Directory for storing input data')
+FLAGS, unparsed = parser.parse_known_args()
 
 
 def deepnn(x):
@@ -119,57 +127,99 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
+x = tf.placeholder(tf.float32, [None, 784])
+# Define loss and optimizer
+y_ = tf.placeholder(tf.int64, [None])
+# Build the graph for the deep net
+y_conv, keep_prob = deepnn(x)
 
-def main(_):
-  # Import data
-  mnist = input_data.read_data_sets(FLAGS.data_dir)
+saver = tf.train.Saver()
 
-  # Create the model
-  x = tf.placeholder(tf.float32, [None, 784])
+def predict(images):
+    with tf.Session() as sess:
+        #restore variables from disk
+        sess.run(tf.global_variables_initializer())
+        saver.restore(sess, "trained_models/mnist_classifier.ckpt")
+        labels = y_conv.eval(feed_dict={x: images, keep_prob: 1.0})
+    return labels
 
-  # Define loss and optimizer
-  y_ = tf.placeholder(tf.int64, [None])
+def summary_statistics(images):
+    prediction = predict(images)
+    prediction = np.argmax(prediction, axis=1)
+    labels = [i for i in range(10)]
+    stats = []
+    for label in labels:
+        stats.append((prediction == label).sum())
+    return np.array(stats)
 
-  # Build the graph for the deep net
-  y_conv, keep_prob = deepnn(x)
+mnist = input_data.read_data_sets(FLAGS.data_dir)
+prediction = predict(mnist.test.images)
+print(prediction)
+print(summary_statistics(mnist.test.images))
 
-  with tf.name_scope('loss'):
-    cross_entropy = tf.losses.sparse_softmax_cross_entropy(
-        labels=y_, logits=y_conv)
-  cross_entropy = tf.reduce_mean(cross_entropy)
+#pdb.set_trace()
 
-  with tf.name_scope('adam_optimizer'):
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 
-  with tf.name_scope('accuracy'):
-    correct_prediction = tf.equal(tf.argmax(y_conv, 1), y_)
-    correct_prediction = tf.cast(correct_prediction, tf.float32)
-  accuracy = tf.reduce_mean(correct_prediction)
-
-  graph_location = tempfile.mkdtemp()
-  print('Saving graph to: %s' % graph_location)
-  train_writer = tf.summary.FileWriter(graph_location)
-  train_writer.add_graph(tf.get_default_graph())
-  saver = tf.train.Saver()
-  with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    for i in range(20000):
-      batch = mnist.train.next_batch(50)
-      if i % 100 == 0:
-        train_accuracy = accuracy.eval(feed_dict={
-            x: batch[0], y_: batch[1], keep_prob: 1.0})
-        print('step %d, training accuracy %g' % (i, train_accuracy))
-      train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
-    print('test accuracy %g' % accuracy.eval(feed_dict={
-        x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
-    model_name ='mnist_classifier'
-    save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
-    print(model_name + " saved in path: %s" % save_path)
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--data_dir', type=str,
-                      default='/tmp/tensorflow/mnist/input_data',
-                      help='Directory for storing input data')
-  FLAGS, unparsed = parser.parse_known_args()
-  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+# def main(_):
+#   # Import data
+#   mnist = input_data.read_data_sets(FLAGS.data_dir)
+#
+#   # Create the model
+#   x = tf.placeholder(tf.float32, [None, 784])
+#
+#   # Define loss and optimizer
+#   y_ = tf.placeholder(tf.int64, [None])
+#
+#   # Build the graph for the deep net
+#   y_conv, keep_prob = deepnn(x)
+#
+#   with tf.name_scope('loss'):
+#     cross_entropy = tf.losses.sparse_softmax_cross_entropy(
+#         labels=y_, logits=y_conv)
+#   cross_entropy = tf.reduce_mean(cross_entropy)
+#
+#   with tf.name_scope('adam_optimizer'):
+#     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+#
+#   with tf.name_scope('accuracy'):
+#     correct_prediction = tf.equal(tf.argmax(y_conv, 1), y_)
+#     correct_prediction = tf.cast(correct_prediction, tf.float32)
+#   accuracy = tf.reduce_mean(correct_prediction)
+#
+#   # graph_location = tempfile.mkdtemp()
+#   # print('Saving graph to: %s' % graph_location)
+#   # train_writer = tf.summary.FileWriter(graph_location)
+#   # train_writer.add_graph(tf.get_default_graph())
+#   saver = tf.train.Saver()
+#   # with tf.Session() as sess:
+#   #   sess.run(tf.global_variables_initializer())
+#   #   for i in range(20000):
+#   #     batch = mnist.train.next_batch(50)
+#   #     if i % 100 == 0:
+#   #       train_accuracy = accuracy.eval(feed_dict={
+#   #           x: batch[0], y_: batch[1], keep_prob: 1.0})
+#   #       print('step %d, training accuracy %g' % (i, train_accuracy))
+#   #     train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+#   #
+#   #   print('test accuracy %g' % accuracy.eval(feed_dict={
+#   #       x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+#   #   model_name ='mnist_classifier'
+#   #   save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
+#   #   print(model_name + " saved in path: %s" % save_path)
+#   # with tf.Session() as sess:
+#   #     #restore variables from disk
+#   #     sess.run(tf.global_variables_initializer())
+#   #     saver.restore(sess, "trained_models/mnist_classifier.ckpt")
+#   #     labels = y_conv.eval(feed_dict={x: mnist.test.images, keep_prob: 1.0})
+#   #     print(labels)
+#
+# # sess = tf.Session()
+# # saver.restore(sess, "trained_models/mnist_classifier.ckpt")
+# # labels = y_conv.eval(feed_dict={x: mnist.test.images})
+# if __name__ == '__main__':
+#   parser = argparse.ArgumentParser()
+#   parser.add_argument('--data_dir', type=str,
+#                       default='/tmp/tensorflow/mnist/input_data',
+#                       help='Directory for storing input data')
+#   FLAGS, unparsed = parser.parse_known_args()
+#   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
