@@ -16,6 +16,7 @@ track progress and see sample images in TensorBoard.
 import tensorflow as tf
 import numpy as np
 import datetime
+import matplotlib.pyplot as plt
 
 # Load MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
@@ -95,6 +96,8 @@ def generator(z, batch_size, z_dim):
     # Dimensions of g4: batch_size x 28 x 28 x 1
     return g4
 
+tf.reset_default_graph()
+
 z_dimensions = 100
 batch_size = 50
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
@@ -134,6 +137,9 @@ g_trainer = tf.train.AdamOptimizer(0.0001).minimize(g_loss, var_list=g_vars)
 # From this point forward, reuse variables
 tf.get_variable_scope().reuse_variables()
 
+saver = tf.train.Saver()
+
+"""
 sess = tf.Session()
 
 # Send summary statistics to TensorBoard
@@ -146,6 +152,7 @@ tf.summary.image('Generated_images', images_for_tensorboard, 5)
 merged = tf.summary.merge_all()
 logdir = "tensorboard/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
 writer = tf.summary.FileWriter(logdir, sess.graph)
+
 
 sess.run(tf.global_variables_initializer())
 
@@ -170,7 +177,44 @@ for i in range(100000):
     _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
 
     if i % 10 == 0:
+        print(i)
         # Update TensorBoard with summary statistics
         z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
         summary = sess.run(merged, {z_placeholder: z_batch, x_placeholder: real_image_batch})
         writer.add_summary(summary, i)
+
+
+model_name = 'model1'
+save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
+print(model_name + " saved in path: %s" % save_path)
+        
+z_dimensions = 100
+z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
+
+generated_image_output = generator(z_placeholder, 1, z_dimensions)
+z_batch = np.random.normal(0, 1, [1, z_dimensions])
+
+generated_image = sess.run(generated_image_output, feed_dict={z_placeholder: z_batch})
+generated_image = generated_image.reshape([28, 28])
+
+plt.imsave('gen.png', generated_image, cmap='Greys')
+"""
+
+
+with tf.Session() as sess:
+    # Restore variables from disk.
+    saver.restore(sess, "trained_models/model1.ckpt")
+    print("Model restored.")
+    batch_size = 1000
+    z_dimensions = 100
+    z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
+
+    generated_image_output = generator(z_placeholder, batch_size, z_dimensions)
+    z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
+
+    generated_images = sess.run(generated_image_output, feed_dict={z_placeholder: z_batch})
+    generated_images = generated_images.reshape([batch_size, 28, 28])
+    for i in range(batch_size):
+        img_loc = 'generated_images/genImg' + str(i) + '.png'
+        generated_image = generated_images[i, :, :]
+        plt.imsave(img_loc, generated_image, cmap='Greys')

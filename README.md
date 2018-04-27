@@ -36,3 +36,4 @@ The easiest way to install TensorFlow as well as NumPy, Jupyter, and matplotlib 
     jupyter notebook
     ```
     and, using your browser, navigate to the URL shown in the terminal output (usually http://localhost:8888/)
+# ganAdditionalFeatures
