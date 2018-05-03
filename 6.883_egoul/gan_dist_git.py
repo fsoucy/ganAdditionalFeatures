@@ -12,12 +12,8 @@ mnist = input_data.read_data_sets("MNIST_data/")
 
 
 # Define the discriminator network
-def discriminator(images, reuse_variables=None):
+def discriminator(images, labels, reuse_variables=None):
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables) as scope:
-        with tf.Session().as_default() as sess1:
-            current_images = images.eval(session=sess1)
-        labels = mnist_classifier.summary_statistics(current_images)
-        labels = np.reshape(labels, [1,10])
         # labels = np.ones([1,10])
         # First convolutional and pool layers
         # This finds 32 different 5 x 5 pixel features
@@ -111,21 +107,26 @@ def generator(z, batch_size, z_dim):
     # Dimensions of g4: batch_size x 28 x 28 x 1
     return g4
 
+
 z_dimensions = 100
 batch_size = 50
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
 x_placeholder = tf.placeholder(tf.float32, shape = [None,28,28,1], name='x_placeholder')
+
+real_labels_placeholder = tf.placeholder(tf.int32, shape=[1,10])
+fake_labels_placeholder = tf.placeholder(tf.int32, shape=[1,10])
+
 # x_placeholder is for feeding input images to the discriminator
 Gz = generator(z_placeholder, batch_size, z_dimensions)
 # Gz holds the generated images
 
-Dx = discriminator(x_placeholder)
+Dx = discriminator(x_placeholder, real_labels_placeholder)
 # Dx will hold discriminator prediction probabilities
 # for the real MNIST images
 
-Dg = discriminator(Gz, reuse_variables=True)
+Dg = discriminator(Gz, fake_labels_placeholder, reuse_variables=True)
 # Dg will hold discriminator prediction probabilities for generated images
 
 # Define losses
@@ -171,9 +172,15 @@ for i in range(10):
 
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
+    realImageLabels = mnist_classifier.summary_statistics(real_image_batch)
+    realImageLabels = np.reshape(realImageLabels, [1,10])
     modified_batch = real_image_batch.reshape([-1, 784])
+    generatedImages = sess.run([Gz], {z_placeholder: z_batch})[0]
+    generatedImageLabels = mnist_classifier.summary_statistics(generatedImages)
+    generatedImageLabels = np.reshape(generatedImageLabels, [1,10])
+    print(generatedImages.shape)
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake],
-                    {x_placeholder: real_image_batch, z_placeholder: z_batch})
+                    {x_placeholder: real_image_batch, z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
 
 
 
@@ -182,12 +189,19 @@ for i in range(10):
 # Train generator and discriminator together
 for i in range(100):
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
+    realImageLabels = mnist_classifier.summary_statistics(real_image_batch)
+    realImageLabels = np.reshape(realImageLabels, [1,10])
+
     ## train classifier on batch,
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
 
+    generatedImages = sess.run([Gz], {z_placeholder: z_batch})[0]
+    generatedImageLabels = mnist_classifier.summary_statistics(generatedImages)
+    generatedImageLabels = np.reshape(generatedImageLabels, [1,10])
+
     # Train discriminator on both real and fake images
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake],
-                            {x_placeholder: real_image_batch, z_placeholder: z_batch})
+                            {x_placeholder: real_image_batch, z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
 
     # Train generator
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
