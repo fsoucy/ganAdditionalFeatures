@@ -172,11 +172,11 @@ for i in range(10):
 
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
-    realImageLabels = mnist_classifier.summary_statistics(real_image_batch)
+    realImageLabels = mnist_classifier.summary_statistics(real_image_batch.reshape([-1, 784]))
     realImageLabels = np.reshape(realImageLabels, [1,10])
     modified_batch = real_image_batch.reshape([-1, 784])
     generatedImages = sess.run([Gz], {z_placeholder: z_batch})[0]
-    generatedImageLabels = mnist_classifier.summary_statistics(generatedImages)
+    generatedImageLabels = mnist_classifier.summary_statistics(generatedImages.reshape([-1, 784]))
     generatedImageLabels = np.reshape(generatedImageLabels, [1,10])
     print(generatedImages.shape)
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake],
@@ -189,14 +189,14 @@ for i in range(10):
 # Train generator and discriminator together
 for i in range(100):
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
-    realImageLabels = mnist_classifier.summary_statistics(real_image_batch)
+    realImageLabels = mnist_classifier.summary_statistics(real_image_batch.reshape([-1, 784]))
     realImageLabels = np.reshape(realImageLabels, [1,10])
 
     ## train classifier on batch,
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
 
     generatedImages = sess.run([Gz], {z_placeholder: z_batch})[0]
-    generatedImageLabels = mnist_classifier.summary_statistics(generatedImages)
+    generatedImageLabels = mnist_classifier.summary_statistics(generatedImages.reshape([-1,784]))
     generatedImageLabels = np.reshape(generatedImageLabels, [1,10])
 
     # Train discriminator on both real and fake images
