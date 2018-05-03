@@ -168,7 +168,7 @@ sess.run(tf.global_variables_initializer())
 #import pretrained classifier
 
 # Pre-train discriminator
-for i in range(10):
+for i in range(5):
 
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
@@ -187,7 +187,7 @@ for i in range(10):
 
 
 # Train generator and discriminator together
-for i in range(100):
+for i in range(5):
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
     realImageLabels = mnist_classifier.summary_statistics(real_image_batch.reshape([-1, 784]))
     realImageLabels = np.reshape(realImageLabels, [1,10])
@@ -205,11 +205,11 @@ for i in range(100):
 
     # Train generator
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-    _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
+    _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
 
     if i % 10 == 0:
         # Update TensorBoard with summary statistics
         z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-        summary = sess.run(merged, {z_placeholder: z_batch, x_placeholder: real_image_batch})
+        summary = sess.run(merged, {z_placeholder: z_batch, x_placeholder: real_image_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
         print(dLossFake)
         writer.add_summary(summary, i)
