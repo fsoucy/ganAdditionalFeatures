@@ -7,3 +7,6 @@ pretrained-model/
 trained_models/
 notebook-images/
 generated_images/
+debug_mnist_images/
+debug_processed_mnist_images/
+processed_generated_images/
