@@ -135,13 +135,17 @@ y_conv, keep_prob = deepnn(x)
 
 saver = tf.train.Saver()
 
+sess = tf.Session()
+sess.run(tf.global_variables_initializer())
+saver.restore(sess, "trained_models/mnist_classifier.ckpt")
+
 def predict(images):
-    with tf.Session() as sess:
-        #restore variables from disk
-        sess.run(tf.global_variables_initializer())
-        saver.restore(sess, "trained_models/mnist_classifier.ckpt")
-        labels = y_conv.eval(feed_dict={x: images, keep_prob: 1.0})
-    return labels
+  #with tf.Session() as sess:
+  #    #restore variables from disk
+  #    sess.run(tf.global_variables_initializer())
+  #    saver.restore(sess, "trained_models/mnist_classifier.ckpt")
+  labels = y_conv.eval(feed_dict={x: images, keep_prob: 1.0}, session=sess)
+  return labels
 
 def summary_statistics(images):
     prediction = predict(images)
@@ -153,11 +157,7 @@ def summary_statistics(images):
     return np.array(stats)
 
 mnist = input_data.read_data_sets(FLAGS.data_dir)
-prediction = predict(mnist.test.images)
-print(prediction)
-print(summary_statistics(mnist.test.images))
 
-#pdb.set_trace()
 
 
 # def main(_):

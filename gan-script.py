@@ -215,6 +215,6 @@ with tf.Session() as sess:
     generated_images = sess.run(generated_image_output, feed_dict={z_placeholder: z_batch})
     generated_images = generated_images.reshape([batch_size, 28, 28])
     for i in range(batch_size):
-        img_loc = 'generated_images/genImg' + str(i) + '.png'
+        img_loc = 'generated_images/genImg' + str(i) + '.npy'
         generated_image = generated_images[i, :, :]
-        plt.imsave(img_loc, generated_image, cmap='Greys')
+        np.save(img_loc, generated_image)
