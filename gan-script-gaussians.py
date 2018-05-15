@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 # Load MNIST data
 data = np.load('unweighted.npy')
+data = data.reshape((data.shape[0], 1))
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
@@ -39,7 +40,7 @@ def discriminator(data, reuse_variables=None):
         d4 = tf.matmul(d3, d_w4) + d_b4
         
         # d4 contains unscaled values
-        return d5
+        return d4
 
 # Define the generator network
 def generator(z, batch_size, z_dim):
@@ -57,12 +58,12 @@ def generator(z, batch_size, z_dim):
 
 tf.reset_default_graph()
 
-z_dimensions = 100
+z_dimensions = 5
 batch_size = 50
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
-x_placeholder = tf.placeholder(tf.float32, shape = [None,28,28,1], name='x_placeholder')
+x_placeholder = tf.placeholder(tf.float32, shape = [None,1], name='x_placeholder')
 # x_placeholder is for feeding input images to the discriminator
 
 Gz = generator(z_placeholder, batch_size, z_dimensions)
@@ -98,21 +99,54 @@ tf.get_variable_scope().reuse_variables()
 
 saver = tf.train.Saver()
 
+sess = tf.Session()
+
+sess.run(tf.global_variables_initializer())
+
+"""
+# Pre-train discriminator
+for i in range(300):
+    z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
+    np.random.shuffle(data)
+    real_batch = data[0:batch_size, :]
+    generated = sess.run([Gz], {z_placeholder: z_batch})[0]
+    _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
+
+
+iterations = 10000
+for i in range(iterations):
+    if (i % 100 == 0):
+        print(i)
+    z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
+    np.random.shuffle(data)
+    real_batch = data[0:batch_size, :]
+    generated = sess.run([Gz], {z_placeholder: z_batch})[0]
+
+    # Train discriminator
+    _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
+
+    # Train generator
+    z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
+    _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
+
+
+model_name = 'modelGaussians'
+
+save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
+print(model_name + " saved in path: %s" % save_path)
+"""
 
 with tf.Session() as sess:
-    # Restore variables from disk.
-    saver.restore(sess, "trained_models/model1.ckpt")
+    saver.restore(sess, 'trained_models/modelGaussians.ckpt')
     print("Model restored.")
     batch_size = 1000
-    z_dimensions = 100
+    z_dimensions = 5
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
-    generated_data_output = generator(z_placeholder, batch_size, z_dimensions)
+    gen = generator(z_placeholder, batch_size, z_dimensions)
     z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
-    generated_data = sess.run(generated_data_output, feed_dict={z_placeholder: z_batch})
-    generated_data = generated_data.reshape([batch_size, 28, 28])
-    for i in range(batch_size):
-        data_loc = 'generated_data/genDat' + str(i) + '.png'
-        generated_datapoint = generated_data[i, :, :]
-        plt.imsave(img_loc, generated_datapoint, cmap='Greys')
+    genOutput = sess.run(gen, feed_dict={z_placeholder: z_batch})
+    genOutput = genOutput.reshape([batch_size, 1])
+    np.save('genGaussians.npy', genOutput)
+
