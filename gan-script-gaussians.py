@@ -19,7 +19,7 @@ import datetime
 import matplotlib.pyplot as plt
 
 # Load MNIST data
-data = np.load('singlegaussian.npy')
+data = np.load('low_variance.npy')
 data = data.reshape((data.shape[0], 1))
 
 # Define the discriminator network
@@ -105,7 +105,8 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-for i in range(300):
+pre_train_iterations = 10
+for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(data)
     real_batch = data[0:batch_size, :]
@@ -139,7 +140,7 @@ print(model_name + " saved in path: %s" % save_path)
 with tf.Session() as sess:
     saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
     print("Model restored.")
-    batch_size = 1000
+    batch_size = 10000
     z_dimensions = 5
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
@@ -148,5 +149,5 @@ with tf.Session() as sess:
 
     genOutput = sess.run(gen, feed_dict={z_placeholder: z_batch})
     genOutput = genOutput.reshape([batch_size, 1])
-    np.save('genSingleGaussians.npy', genOutput)
+    np.save('genLowVariance.npy', genOutput)
 
