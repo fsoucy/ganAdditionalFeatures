@@ -29,19 +29,27 @@ def create_dataset_unweighted(k,n) :
 
 #create_dataset_unweighted(10,1000)
 #create_dataset_weighted(10,10000)
-data_weighted = np.load('weighted.npy')
-data_unweighted = np.load('unweighted.npy')
-gen_dat = np.load('genGaussians.npy')
-print(len(data_unweighted))
-print(len(gen_dat))
-plt.clf()
-plt.hist(data_unweighted,bins=500,histtype='step')
-plt.show()
+# data_weighted = np.load('weighted.npy')
+# data_unweighted = np.load('unweighted.npy')
+# gen_dat = np.load('genGaussians.npy')
+#
+# plt.clf()
+# plt.hist(data_unweighted,bins=500,histtype='step')
+# plt.show()
+#
+# plt.clf()
+# plt.hist(gen_dat,bins=500,histtype='step')
+# plt.show()
+#
+# plt.clf()
+# plt.hist(data_weighted,bins=500,histtype='step')
+# plt.show()
+
+data_singlegaussian = np.load('singlegaussian.npy')
+data_gen = np.load('genSingleGaussians.npy')
 
 plt.clf()
-plt.hist(gen_dat,bins=500,histtype='step')
-plt.show()
-
-plt.clf()
-plt.hist(data_weighted,bins=500,histtype='step')
+binss = np.linspace(-2, 2, 1000)
+plt.hist(data_gen,bins=binss,histtype='step')
+plt.hist(data_singlegaussian,bins=binss,histtype='step')
 plt.show()
