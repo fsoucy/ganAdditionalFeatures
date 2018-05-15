@@ -19,7 +19,7 @@ import datetime
 import matplotlib.pyplot as plt
 
 # Load MNIST data
-data = np.load('unweighted.npy')
+data = np.load('singlegaussian.npy')
 data = data.reshape((data.shape[0], 1))
 
 # Define the discriminator network
@@ -103,7 +103,7 @@ sess = tf.Session()
 
 sess.run(tf.global_variables_initializer())
 
-"""
+
 # Pre-train discriminator
 for i in range(300):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
@@ -113,7 +113,7 @@ for i in range(300):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 10000
+iterations = 1000
 for i in range(iterations):
     if (i % 100 == 0):
         print(i)
@@ -130,14 +130,14 @@ for i in range(iterations):
     _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
 
 
-model_name = 'modelGaussians'
+model_name = 'modelGaussiansSingle'
 
 save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
 print(model_name + " saved in path: %s" % save_path)
-"""
+
 
 with tf.Session() as sess:
-    saver.restore(sess, 'trained_models/modelGaussians.ckpt')
+    saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
     print("Model restored.")
     batch_size = 1000
     z_dimensions = 5
@@ -148,5 +148,5 @@ with tf.Session() as sess:
 
     genOutput = sess.run(gen, feed_dict={z_placeholder: z_batch})
     genOutput = genOutput.reshape([batch_size, 1])
-    np.save('genGaussians.npy', genOutput)
+    np.save('genSingleGaussians.npy', genOutput)
 
