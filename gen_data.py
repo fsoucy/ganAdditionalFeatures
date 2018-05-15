@@ -45,11 +45,11 @@ def create_dataset_unweighted(k,n) :
 # plt.hist(data_weighted,bins=500,histtype='step')
 # plt.show()
 
-data_singlegaussian = np.load('singlegaussian.npy')
-data_gen = np.load('genSingleGaussians.npy')
+data_singlegaussian = np.load('low_variance.npy')
+data_gen = np.load('genLowVariance.npy')
 
 plt.clf()
-binss = np.linspace(-2, 2, 1000)
+binss = np.linspace(-5, 5, 1000)
 plt.hist(data_gen,bins=binss,histtype='step')
 plt.hist(data_singlegaussian,bins=binss,histtype='step')
 plt.show()
