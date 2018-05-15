@@ -28,7 +28,7 @@ def discriminator(data, reuse_variables=None):
         # First fully connected layer
         d_w3 = tf.get_variable('d_w3', [1, 5], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b3 = tf.get_variable('d_b3', [5], initializer=tf.constant_initializer(0))
-        d3 = tf.reshape(data, [-1, 10])
+        d3 = tf.reshape(data, [-1, 1])
         d3 = tf.matmul(d3, d_w3)
         d3 = d3 + d_b3
         d3 = tf.nn.relu(d3)
@@ -37,6 +37,7 @@ def discriminator(data, reuse_variables=None):
         d_w4 = tf.get_variable('d_w4', [5, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
+        
         # d4 contains unscaled values
         return d5
 
