@@ -26,9 +26,9 @@ def discriminator(data, reuse_variables=None):
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables) as scope:
 
         # First fully connected layer
-        d_w3 = tf.get_variable('d_w3', [7 * 7 * 64, 1024], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_w3 = tf.get_variable('d_w3', [10, 1024], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
-        d3 = tf.reshape(d2, [-1, 7 * 7 * 64])
+        d3 = tf.reshape(data, [-1, 10])
         d3 = tf.matmul(d3, d_w3)
         d3 = d3 + d_b3
         d3 = tf.nn.relu(d3)
@@ -38,8 +38,13 @@ def discriminator(data, reuse_variables=None):
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
 
+        # Third fully connected layer
+        d_w5 = tf.get_variable('d_w5', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_b4 = tf.get_variable('d_b5', [1], initializer=tf.constant_initializer(0))
+        d5 = tf.matmul(d4, d_w5) + d_b5
+
         # d4 contains unscaled values
-        return d4
+        return d5
 
 # Define the generator network
 def generator(z, batch_size, z_dim):
@@ -50,32 +55,22 @@ def generator(z, batch_size, z_dim):
     g1 = tf.contrib.layers.batch_norm(g1, epsilon=1e-5, scope='g_b1')
     g1 = tf.nn.relu(g1)
 
-    # Generate 50 features
-    g_w2 = tf.get_variable('g_w2', [3, 3, 1, z_dim/2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b2 = tf.get_variable('g_b2', [z_dim/2], initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g2 = tf.nn.conv2d(g1, g_w2, strides=[1, 2, 2, 1], padding='SAME')
-    g2 = g2 + g_b2
-    g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, scope='g_b2')
+    g_w2 = tf.get_variable('g_w2', [z_dim, 3136], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_b2 = tf.get_variable('g_b2', [3136], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g2 = tf.matmul(g1, g_w2) + g_b2
+    g2 = tf.reshape(g2, [-1, 56, 56, 1])
+    g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, scope='g_b1')
     g2 = tf.nn.relu(g2)
-    g2 = tf.image.resize_images(g2, [56, 56])
 
-    # Generate 25 features
-    g_w3 = tf.get_variable('g_w3', [3, 3, z_dim/2, z_dim/4], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b3 = tf.get_variable('g_b3', [z_dim/4], initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g3 = tf.nn.conv2d(g2, g_w3, strides=[1, 2, 2, 1], padding='SAME')
-    g3 = g3 + g_b3
-    g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, scope='g_b3')
+    g_w3 = tf.get_variable('g_w3', [z_dim, 3136], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_b3 = tf.get_variable('g_b3', [3136], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g3 = tf.matmul(g2, g_w3) + g_b3
+    g3 = tf.reshape(g3, [-1, 56, 56, 1])
+    g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, scope='g_b1')
     g3 = tf.nn.relu(g3)
-    g3 = tf.image.resize_images(g3, [56, 56])
 
-    # Final convolution with one output channel
-    g_w4 = tf.get_variable('g_w4', [1, 1, z_dim/4, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b4 = tf.get_variable('g_b4', [1], initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g4 = tf.nn.conv2d(g3, g_w4, strides=[1, 2, 2, 1], padding='SAME')
-    g4 = g4 + g_b4
-    g4 = tf.sigmoid(g4)
+    g4 = tf.sigmoid(g3)
 
-    # Dimensions of g4: batch_size x 28 x 28 x 1
     return g4
 
 tf.reset_default_graph()
@@ -130,12 +125,12 @@ with tf.Session() as sess:
     z_dimensions = 100
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
-    generated_image_output = generator(z_placeholder, batch_size, z_dimensions)
+    generated_data_output = generator(z_placeholder, batch_size, z_dimensions)
     z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
-    generated_images = sess.run(generated_image_output, feed_dict={z_placeholder: z_batch})
-    generated_images = generated_images.reshape([batch_size, 28, 28])
+    generated_data = sess.run(generated_data_output, feed_dict={z_placeholder: z_batch})
+    generated_data = generated_data.reshape([batch_size, 28, 28])
     for i in range(batch_size):
-        img_loc = 'generated_images/genImg' + str(i) + '.png'
-        generated_image = generated_images[i, :, :]
-        plt.imsave(img_loc, generated_image, cmap='Greys')
+        data_loc = 'generated_data/genDat' + str(i) + '.png'
+        generated_datapoint = generated_data[i, :, :]
+        plt.imsave(img_loc, generated_datapoint, cmap='Greys')
