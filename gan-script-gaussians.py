@@ -1,4 +1,17 @@
+"""
+This is a straightforward Python implementation of a generative adversarial network.
+The code is drawn directly from the O'Reilly interactive tutorial on GANs
+(https://www.oreilly.com/learning/generative-adversarial-networks-for-beginners).
 
+A version of this model with explanatory notes is also available on GitHub
+at https://github.com/jonbruner/generative-adversarial-networks.
+
+This script requires TensorFlow and its dependencies in order to run. Please see
+the readme for guidance on installing TensorFlow.
+
+This script won't print summary statistics in the terminal during training;
+track progress and see sample images in TensorBoard.
+"""
 
 import tensorflow as tf
 import numpy as np
@@ -6,8 +19,9 @@ import datetime
 import matplotlib.pyplot as plt
 
 # Load MNIST data
-data = np.load('low_variance.npy')
-data = data.reshape((data.shape[0], 1))
+#data = np.load('3_1.npy')
+#data = data.reshape((data.shape[0], 1))
+data = np.random.normal(loc=-0.5, scale=0.7, size=10000).reshape((10000, 1))
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
@@ -16,16 +30,15 @@ def discriminator(data, reuse_variables=None):
         # First fully connected layer
         d_w3 = tf.get_variable('d_w3', [1, 32], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b3 = tf.get_variable('d_b3', [32], initializer=tf.constant_initializer(0))
-        d3 = tf.reshape(data, [-1, 1])
-        d3 = tf.matmul(d3, d_w3)
-        d3 = d3 + d_b3
+        _data = tf.reshape(data, [-1, 1])
+        d3 = tf.matmul(_data, d_w3) + d_b3
         d3 = tf.nn.relu(d3)
 
         # Second fully connected layer
         d_w4 = tf.get_variable('d_w4', [32, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
-
+        
         # d4 contains unscaled values
         return d4
 
@@ -34,7 +47,7 @@ def generator(z, batch_size, z_dim):
     g_w1 = tf.get_variable('g_w1', [z_dim, 32], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
     g_b1 = tf.get_variable('g_b1', [32], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g1 = tf.matmul(z, g_w1) + g_b1
-    g1 = tf.reshape(g1, [-1, 1])
+    # g1 = tf.reshape(g1, [-1, 1])
     g1 = tf.nn.relu(g1)
 
     g_w2 = tf.get_variable('g_w2', [32, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
@@ -46,7 +59,7 @@ def generator(z, batch_size, z_dim):
 tf.reset_default_graph()
 
 z_dimensions = 1
-batch_size = 100
+batch_size = 500
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
@@ -92,7 +105,7 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 100
+pre_train_iterations = 300
 for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(data)
@@ -101,7 +114,7 @@ for i in range(pre_train_iterations):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 5000
+iterations = 10000
 for i in range(iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(data)
@@ -129,7 +142,7 @@ print(model_name + " saved in path: %s" % save_path)
 with tf.Session() as sess:
     saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
     print("Model restored.")
-    batch_size = 100
+    batch_size = 500
     z_dimensions = 1
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
@@ -138,4 +151,6 @@ with tf.Session() as sess:
 
     genOutput = sess.run(gen, feed_dict={z_placeholder: z_batch})
     genOutput = genOutput.reshape([batch_size, 1])
+    print(genOutput.mean())
     np.save('genLowVariance.npy', genOutput)
+
