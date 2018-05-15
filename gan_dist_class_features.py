@@ -150,6 +150,8 @@ g_trainer = tf.train.AdamOptimizer(0.0001).minimize(g_loss, var_list=g_vars)
 # From this point forward, reuse variables
 tf.get_variable_scope().reuse_variables()
 
+saver = tf.train.Saver()
+
 sess = tf.Session()
 
 # Send summary statistics to TensorBoard
@@ -187,8 +189,9 @@ for i in range(300):
 
 
 
+iterations = 100000
 # Train generator and discriminator together
-for i in range(100000):
+for i in range(iterations):
     if (i % 10) == 0:
         print(i)
     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
@@ -217,6 +220,6 @@ for i in range(100000):
         # print(dLossFake)
         writer.add_summary(summary, i)
 
-model_name = 'model1_withClassFeatures'
+model_name = 'model1_withClassFeatures_test'
 save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
 print(model_name + " saved in path: %s" % save_path)

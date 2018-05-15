@@ -26,52 +26,33 @@ def discriminator(data, reuse_variables=None):
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables) as scope:
 
         # First fully connected layer
-        d_w3 = tf.get_variable('d_w3', [10, 1024], initializer=tf.truncated_normal_initializer(stddev=0.02))
-        d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
+        d_w3 = tf.get_variable('d_w3', [1, 5], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_b3 = tf.get_variable('d_b3', [5], initializer=tf.constant_initializer(0))
         d3 = tf.reshape(data, [-1, 10])
         d3 = tf.matmul(d3, d_w3)
         d3 = d3 + d_b3
         d3 = tf.nn.relu(d3)
 
         # Second fully connected layer
-        d_w4 = tf.get_variable('d_w4', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_w4 = tf.get_variable('d_w4', [5, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
-
-        # Third fully connected layer
-        d_w5 = tf.get_variable('d_w5', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
-        d_b4 = tf.get_variable('d_b5', [1], initializer=tf.constant_initializer(0))
-        d5 = tf.matmul(d4, d_w5) + d_b5
-
         # d4 contains unscaled values
         return d5
 
 # Define the generator network
 def generator(z, batch_size, z_dim):
-    g_w1 = tf.get_variable('g_w1', [z_dim, 3136], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b1 = tf.get_variable('g_b1', [3136], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_w1 = tf.get_variable('g_w1', [z_dim, 10], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_b1 = tf.get_variable('g_b1', [10], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g1 = tf.matmul(z, g_w1) + g_b1
-    g1 = tf.reshape(g1, [-1, 56, 56, 1])
-    g1 = tf.contrib.layers.batch_norm(g1, epsilon=1e-5, scope='g_b1')
+    g1 = tf.reshape(g1, [-1, 10])
     g1 = tf.nn.relu(g1)
 
-    g_w2 = tf.get_variable('g_w2', [z_dim, 3136], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b2 = tf.get_variable('g_b2', [3136], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_w2 = tf.get_variable('g_w2', [10, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_b2 = tf.get_variable('g_b2', [1], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g2 = tf.matmul(g1, g_w2) + g_b2
-    g2 = tf.reshape(g2, [-1, 56, 56, 1])
-    g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, scope='g_b1')
-    g2 = tf.nn.relu(g2)
 
-    g_w3 = tf.get_variable('g_w3', [z_dim, 3136], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b3 = tf.get_variable('g_b3', [3136], initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g3 = tf.matmul(g2, g_w3) + g_b3
-    g3 = tf.reshape(g3, [-1, 56, 56, 1])
-    g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, scope='g_b1')
-    g3 = tf.nn.relu(g3)
-
-    g4 = tf.sigmoid(g3)
-
-    return g4
+    return g2
 
 tf.reset_default_graph()
 
