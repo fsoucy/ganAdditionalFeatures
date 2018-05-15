@@ -26,20 +26,20 @@ def discriminator(data, reuse_variables=None):
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables) as scope:
 
         # First fully connected layer
-        d_w3 = tf.get_variable('d_w3', [10, 1024], initializer=tf.truncated_normal_initializer(stddev=0.02))
-        d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
+        d_w3 = tf.get_variable('d_w3', [10, 10], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_b3 = tf.get_variable('d_b3', [10], initializer=tf.constant_initializer(0))
         d3 = tf.reshape(data, [-1, 10])
         d3 = tf.matmul(d3, d_w3)
         d3 = d3 + d_b3
         d3 = tf.nn.relu(d3)
 
         # Second fully connected layer
-        d_w4 = tf.get_variable('d_w4', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_w4 = tf.get_variable('d_w4', [10, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
 
         # Third fully connected layer
-        d_w5 = tf.get_variable('d_w5', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_w5 = tf.get_variable('d_w5', [10, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b5', [1], initializer=tf.constant_initializer(0))
         d5 = tf.matmul(d4, d_w5) + d_b5
 
