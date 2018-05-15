@@ -16,12 +16,14 @@ track progress and see sample images in TensorBoard.
 import tensorflow as tf
 import numpy as np
 import datetime
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # Load MNIST data
 #data = np.load('3_1.npy')
 #data = data.reshape((data.shape[0], 1))
-data = np.random.normal(loc=-0.5, scale=0.7, size=10000).reshape((10000, 1))
+data = np.random.normal(loc=0.6, scale=0.8, size=10000).reshape((10000, 1))
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
@@ -59,7 +61,7 @@ def generator(z, batch_size, z_dim):
 tf.reset_default_graph()
 
 z_dimensions = 1
-batch_size = 500
+batch_size = 100
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
@@ -114,7 +116,7 @@ for i in range(pre_train_iterations):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 10000
+iterations = 4000
 for i in range(iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(data)
@@ -123,7 +125,9 @@ for i in range(iterations):
     if (i % 100 == 0):
         print(i)
         print(generated.mean())
+        print(generated.std())
         print(real_batch.mean())
+        print(real_batch.std())
 
     # Train discriminator
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
@@ -142,7 +146,7 @@ print(model_name + " saved in path: %s" % save_path)
 with tf.Session() as sess:
     saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
     print("Model restored.")
-    batch_size = 500
+    batch_size = 1000
     z_dimensions = 1
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
@@ -154,3 +158,11 @@ with tf.Session() as sess:
     print(genOutput.mean())
     np.save('genLowVariance.npy', genOutput)
 
+print(genOutput.mean())
+print(genOutput.std())
+smallData = data[0:1000, :]
+bins = np.linspace(-2, 2, 1000)
+plt.hist(genOutput, bins, alpha=0.5, label='Generated')
+plt.hist(smallData, bins, alpha=0.5, label='Data')
+plt.legend(loc='upper right')
+plt.savefig('test2.png')
