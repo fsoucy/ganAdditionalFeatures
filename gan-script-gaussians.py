@@ -27,15 +27,15 @@ def discriminator(data, reuse_variables=None):
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables) as scope:
 
         # First fully connected layer
-        d_w3 = tf.get_variable('d_w3', [1, 5], initializer=tf.truncated_normal_initializer(stddev=0.02))
-        d_b3 = tf.get_variable('d_b3', [5], initializer=tf.constant_initializer(0))
+        d_w3 = tf.get_variable('d_w3', [1, 32], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_b3 = tf.get_variable('d_b3', [32], initializer=tf.constant_initializer(0))
         d3 = tf.reshape(data, [-1, 1])
         d3 = tf.matmul(d3, d_w3)
         d3 = d3 + d_b3
         d3 = tf.nn.relu(d3)
 
         # Second fully connected layer
-        d_w4 = tf.get_variable('d_w4', [5, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_w4 = tf.get_variable('d_w4', [32, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
         
@@ -44,13 +44,13 @@ def discriminator(data, reuse_variables=None):
 
 # Define the generator network
 def generator(z, batch_size, z_dim):
-    g_w1 = tf.get_variable('g_w1', [z_dim, 10], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b1 = tf.get_variable('g_b1', [10], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_w1 = tf.get_variable('g_w1', [z_dim, 32], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_b1 = tf.get_variable('g_b1', [32], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g1 = tf.matmul(z, g_w1) + g_b1
-    g1 = tf.reshape(g1, [-1, 10])
+    g1 = tf.reshape(g1, [-1, 1])
     g1 = tf.nn.relu(g1)
 
-    g_w2 = tf.get_variable('g_w2', [10, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_w2 = tf.get_variable('g_w2', [32, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
     g_b2 = tf.get_variable('g_b2', [1], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g2 = tf.matmul(g1, g_w2) + g_b2
 
@@ -58,8 +58,8 @@ def generator(z, batch_size, z_dim):
 
 tf.reset_default_graph()
 
-z_dimensions = 5
-batch_size = 50
+z_dimensions = 1
+batch_size = 100
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
@@ -88,11 +88,11 @@ g_vars = [var for var in tvars if 'g_' in var.name]
 
 # Define the optimizers
 # Train the discriminator
-d_trainer_fake = tf.train.AdamOptimizer(0.0003).minimize(d_loss_fake, var_list=d_vars)
-d_trainer_real = tf.train.AdamOptimizer(0.0003).minimize(d_loss_real, var_list=d_vars)
+d_trainer_fake = tf.train.AdamOptimizer(0.03).minimize(d_loss_fake, var_list=d_vars)
+d_trainer_real = tf.train.AdamOptimizer(0.03).minimize(d_loss_real, var_list=d_vars)
 
 # Train the generator
-g_trainer = tf.train.AdamOptimizer(0.0001).minimize(g_loss, var_list=g_vars)
+g_trainer = tf.train.AdamOptimizer(0.01).minimize(g_loss, var_list=g_vars)
 
 # From this point forward, reuse variables
 tf.get_variable_scope().reuse_variables()
@@ -105,7 +105,7 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 10
+pre_train_iterations = 100
 for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(data)
@@ -114,14 +114,16 @@ for i in range(pre_train_iterations):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 1000
+iterations = 5000
 for i in range(iterations):
-    if (i % 100 == 0):
-        print(i)
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(data)
     real_batch = data[0:batch_size, :]
     generated = sess.run([Gz], {z_placeholder: z_batch})[0]
+    if (i % 100 == 0):
+        print(i)
+        print(generated.mean())
+        print(real_batch.mean())
 
     # Train discriminator
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
@@ -140,8 +142,8 @@ print(model_name + " saved in path: %s" % save_path)
 with tf.Session() as sess:
     saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
     print("Model restored.")
-    batch_size = 10000
-    z_dimensions = 5
+    batch_size = 100
+    z_dimensions = 1
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
     gen = generator(z_placeholder, batch_size, z_dimensions)
