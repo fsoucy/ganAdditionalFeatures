@@ -23,16 +23,17 @@ import matplotlib.pyplot as plt
 # Load MNIST data
 #data = np.load('3_1.npy')
 #data = data.reshape((data.shape[0], 1))
-real_data = np.random.normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
+realData = np.random.normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
+realData = np.random.multivariate_normal([1.0, -1.0], [[0.7, 0.0], [0.0, 0.7]], 10000)
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables) as scope:
 
         # First fully connected layer
-        d_w3 = tf.get_variable('d_w3', [1, 32], initializer=tf.truncated_normal_initializer(stddev=0.02))
+        d_w3 = tf.get_variable('d_w3', [2, 32], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b3 = tf.get_variable('d_b3', [32], initializer=tf.constant_initializer(0))
-        _data = tf.reshape(data, [-1, 1])
+        _data = tf.reshape(data, [-1, 2])
         d3 = tf.matmul(_data, d_w3) + d_b3
         d3 = tf.nn.relu(d3)
 
@@ -52,20 +53,20 @@ def generator(z, batch_size, z_dim):
     # g1 = tf.reshape(g1, [-1, 1])
     g1 = tf.nn.relu(g1)
 
-    g_w2 = tf.get_variable('g_w2', [32, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
-    g_b2 = tf.get_variable('g_b2', [1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_w2 = tf.get_variable('g_w2', [32, 2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    g_b2 = tf.get_variable('g_b2', [2], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g2 = tf.matmul(g1, g_w2) + g_b2
 
     return g2
 
 tf.reset_default_graph()
 
-z_dimensions = 1
-batch_size = 25
+z_dimensions = 2
+batch_size = 150
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
-x_placeholder = tf.placeholder(tf.float32, shape = [None,1], name='x_placeholder')
+x_placeholder = tf.placeholder(tf.float32, shape = [None,2], name='x_placeholder')
 # x_placeholder is for feeding input images to the discriminator
 
 Gz = generator(z_placeholder, batch_size, z_dimensions)
@@ -110,8 +111,8 @@ sess.run(tf.global_variables_initializer())
 pre_train_iterations = 1000
 for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-    np.random.shuffle(real_data)
-    real_batch = real_data[0:batch_size, :]
+    np.random.shuffle(realData)
+    real_batch = realData[0:batch_size, :]
     generated = sess.run([Gz], {z_placeholder: z_batch})[0]
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
@@ -119,8 +120,8 @@ for i in range(pre_train_iterations):
 iterations = 5000
 for i in range(iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-    np.random.shuffle(real_data)
-    real_batch = real_data[0:batch_size, :]
+    np.random.shuffle(realData)
+    real_batch = realData[0:batch_size, :]
     generated = sess.run([Gz], {z_placeholder: z_batch})[0]
     if (i % 100 == 0):
         print(i)
@@ -137,32 +138,36 @@ for i in range(iterations):
     _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
 
 
-model_name = 'modelGaussiansSingle'
+model_name = 'modelGaussians2D'
 
 save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
 print(model_name + " saved in path: %s" % save_path)
 
 
 with tf.Session() as sess:
-    saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
+    saver.restore(sess, 'trained_models/modelGaussians2D.ckpt')
     print("Model restored.")
     batch_size = 1000
-    z_dimensions = 1
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
     gen = generator(z_placeholder, batch_size, z_dimensions)
     z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
     genOutput = sess.run(gen, feed_dict={z_placeholder: z_batch})
-    genOutput = genOutput.reshape([batch_size, 1])
+    genOutput = genOutput.reshape([batch_size, 2])
     print(genOutput.mean())
-    np.save('genLowVariance.npy', genOutput)
+    np.save('gen2D.npy', genOutput)
 
-print(genOutput.mean())
-print(genOutput.std())
-smallData = real_data[0:1000, :]
-bins = np.linspace(-2, 2, 1000)
-plt.hist(genOutput, bins, alpha=0.5, label='Generated')
-plt.hist(smallData, bins, alpha=0.5, label='Data')
-plt.legend(loc='upper right')
-plt.savefig('test3.png')
+
+
+def plot2D(realPoints, fakePoints, fname):
+    plt.clf()
+    realX, realY = [i for i in realPoints[:, 0]], [i for i in realPoints[:, 1]]
+    fakeX, fakeY = [i for i in fakePoints[:, 0]], [i for i in fakePoints[:, 1]]
+    plt.scatter(realX,realY, label='Data')
+    plt.scatter(fakeX, fakeY, label='Generated')
+    plt.legend()
+    plt.savefig(fname)
+
+realPoints = realData[0:1000, :]
+plot2D(realPoints, genOutput, 'gen2D.png')
