@@ -119,13 +119,8 @@ for i in range(pre_train_iterations):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 5
-d_loss_fake = []
-d_loss_real = []
-g_losses = []
+iterations = 5000
 for i in range(iterations):
-    print('iteration ' + str(i))
-    print('training discriminator')
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
     real_batch = realData[0:batch_size, :]
@@ -139,12 +134,9 @@ for i in range(iterations):
 
     # Train discriminator
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
-    print('Loss')
-    # Train generator 10 times against discriminator
-    for i in range(5):
-        print('training generator')
-        z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-        _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
+
+    z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
+    _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
 
 
 model_name = 'modelGaussians2D'
@@ -161,19 +153,12 @@ with tf.Session() as sess:
 
     gen = generator(z_placeholder, batch_size, z_dimensions)
     z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
+
     genOutput = sess.run(gen, feed_dict={z_placeholder: z_batch})
     genOutput = genOutput.reshape([batch_size, 2])
     print(genOutput.mean())
     np.save('gen2D.npy', genOutput)
 
-# def plotLosses(fake_loss,real_loss, fname):
-#     plt.clf()
-#     print(fake_loss)
-#     plt.plot(fake_loss,label='d_loss_fake')
-#     plt.plot(real_loss,label='d_loss_real')
-#     #plt.plot(g_losses,label='g_loss')
-#     plt.legend()
-#     plt.savefig(fname)
 
 
 def plot2D(realPoints, fakePoints, fname):
@@ -187,4 +172,3 @@ def plot2D(realPoints, fakePoints, fname):
 
 realPoints = realData[0:1000, :]
 plot2D(realPoints, genOutput, 'gen2D.png')
-#plotLosses(d_loss_fake,d_loss_real,'losses.png')
