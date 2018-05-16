@@ -9,8 +9,23 @@ import matplotlib.pyplot as plt
 # Load MNIST data
 #data = np.load('3_1.npy')
 #data = data.reshape((data.shape[0], 1))
-realData = np.random.normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
-realData = np.random.multivariate_normal([1.0, -1.0], [[0.7, 0.0], [0.0, 0.7]], 10000)
+#realData = np.random.multivariate_normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
+
+#generate Data
+means = [[1,1],[1,-1],[-1,1],[-1,-1]]
+cov = [[.05,0],[0,.05]]
+data = []
+for mean in means:
+    data.append(np.random.multivariate_normal(mean,cov,4000))
+new_dat = []
+for i in range(len(data)):
+    for j in range(len(data[i])):
+        new_dat.append(data[i][j])
+data = np.array(new_dat)
+data = data.reshape((16000,2))
+realData = data
+
+
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
@@ -47,7 +62,7 @@ def generator(z, batch_size, z_dim):
 
 tf.reset_default_graph()
 
-z_dimensions = 10
+z_dimensions = 32
 batch_size = 150
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
@@ -94,7 +109,7 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 700
+pre_train_iterations = 1000
 for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
@@ -103,7 +118,7 @@ for i in range(pre_train_iterations):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 10000
+iterations = 20000
 for i in range(iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
