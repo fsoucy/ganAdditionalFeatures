@@ -1,18 +1,3 @@
-"""
-This is a straightforward Python implementation of a generative adversarial network.
-The code is drawn directly from the O'Reilly interactive tutorial on GANs
-(https://www.oreilly.com/learning/generative-adversarial-networks-for-beginners).
-
-A version of this model with explanatory notes is also available on GitHub
-at https://github.com/jonbruner/generative-adversarial-networks.
-
-This script requires TensorFlow and its dependencies in order to run. Please see
-the readme for guidance on installing TensorFlow.
-
-This script won't print summary statistics in the terminal during training;
-track progress and see sample images in TensorBoard.
-"""
-
 import tensorflow as tf
 import numpy as np
 import datetime
@@ -41,7 +26,7 @@ def discriminator(data, reuse_variables=None):
         d_w4 = tf.get_variable('d_w4', [32, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
-        
+
         # d4 contains unscaled values
         return d4
 
