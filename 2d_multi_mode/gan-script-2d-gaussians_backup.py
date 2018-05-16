@@ -110,7 +110,7 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 10
+pre_train_iterations = 500
 for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
