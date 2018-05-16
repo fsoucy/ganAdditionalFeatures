@@ -170,7 +170,7 @@ sess.run(tf.global_variables_initializer())
 #import pretrained classifier
 
 # Pre-train discriminator
-for i in range(300):
+for i in range(20000):
     if (i % 10) == 0:
         print(i)
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])

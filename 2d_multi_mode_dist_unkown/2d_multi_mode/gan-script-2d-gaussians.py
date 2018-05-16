@@ -27,20 +27,13 @@ realData = data
 #augment the discriminator network with: class distribution of points based on quadrants
 
 def get_labels(input):
-    freqs = [0,0,0,0]
-    for point in input:
-        if point[0] >= 0:
-            if point[1] >= 0:
-                freqs[0] += 1.0
-            else:
-                freqs[3] += 1.0
-        else:
-            if point[1] >= 0:
-                freqs[1] += 1.0
-            else:
-                freqs[2] += 1.0
-    freqs = [val/len(input) for val in freqs]
-    return freqs
+    #calculate mean and std of input
+    xmean = np.mean(input,axis=0)[0]
+    ymean = np.mean(input,axis=0)[0]
+    xvar = np.var(input[:,0])
+    yvar = np.var(input[:,1])
+    vals = [xmean,ymean,xvar,yvar]
+    return vals
 
 # Define the discriminator network
 def discriminator(data, class_dist, reuse_variables=None):
@@ -131,9 +124,10 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 10000
+pre_train_iterations = 1000
 for i in range(pre_train_iterations):
-    print(i)
+    if (i%50 == 0):
+        print(i)
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
     real_batch = realData[0:batch_size, :]
