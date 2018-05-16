@@ -21,9 +21,11 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # Load MNIST data
-#data = np.load('3_1.npy')
+data = np.load('data.npy')
 #data = data.reshape((data.shape[0], 1))
-real_data = np.random.normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
+real_data = np.random.normal(loc=2, scale=0.7, size=10000).reshape((10000, 1))
+# real_data = data.reshape((10000,1))
+
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
@@ -40,7 +42,7 @@ def discriminator(data, reuse_variables=None):
         d_w4 = tf.get_variable('d_w4', [32, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
-        
+
         # d4 contains unscaled values
         return d4
 
@@ -137,16 +139,16 @@ for i in range(iterations):
     _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch})
 
 
-model_name = 'modelGaussiansSingle'
+model_name = 'model1dGaussiansSingle'
 
 save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
 print(model_name + " saved in path: %s" % save_path)
 
 
 with tf.Session() as sess:
-    saver.restore(sess, 'trained_models/modelGaussiansSingle.ckpt')
+    saver.restore(sess, 'trained_models/model1dGaussiansSingle.ckpt')
     print("Model restored.")
-    batch_size = 1000
+    batch_size = 500
     z_dimensions = 1
     z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
@@ -160,8 +162,9 @@ with tf.Session() as sess:
 
 print(genOutput.mean())
 print(genOutput.std())
-smallData = real_data[0:1000, :]
-bins = np.linspace(-2, 2, 1000)
+plt.clf()
+smallData = real_data[0:500, :]
+bins = np.linspace(-.5, 3.5, 100)
 plt.hist(genOutput, bins, alpha=0.5, label='Generated')
 plt.hist(smallData, bins, alpha=0.5, label='Data')
 plt.legend(loc='upper right')

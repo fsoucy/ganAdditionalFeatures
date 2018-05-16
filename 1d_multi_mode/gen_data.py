@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 #  k = number of gaussians
 # n = total number of data points
 def create_dataset_weighted(k,n) :
-    means = np.linspace(0,4*k,k)
-    weights = np.random.uniform(0,1,k)
+    means = np.linspace(0,3*k,k)
+    weights = np.random.uniform(0,.5,k)
     weights /= sum(weights)
     vars = np.tile([1],k)
     freqs = np.multiply(weights,n*1.0)
@@ -20,10 +20,10 @@ def create_dataset_weighted(k,n) :
 
 # n = number of data points per class
 def create_dataset_unweighted(k,n) :
-    means = np.linspace(0,4*k,k)
-    vars = np.tile([1],k)
+    means = np.linspace(1,4*k,k+1)
+    vars = np.tile([.5],k)
     points = np.array([np.random.normal(means[i],vars[i],n) for i in range(k)]).flatten()
-    np.save('unweighted',points)
+    #np.save('unweighted',points)
     print('done!')
     return points
 
@@ -45,11 +45,19 @@ def create_dataset_unweighted(k,n) :
 # plt.hist(data_weighted,bins=500,histtype='step')
 # plt.show()
 
-data_singlegaussian = np.load('low_variance.npy')
-data_gen = np.load('genLowVariance.npy')
+# data_singlegaussian = np.load('low_variance.npy')
+# data_gen = np.load('genLowVariance.npy')
+#
+# plt.clf()
+# binss = np.linspace(-5, 5, 1000)
+# plt.hist(data_gen,bins=binss,histtype='step')
+# plt.hist(data_singlegaussian,bins=binss,histtype='step')
+# plt.show()
+
+data = create_dataset_unweighted(8,1500)
+np.save('data',data)
 
 plt.clf()
-binss = np.linspace(-5, 5, 1000)
-plt.hist(data_gen,bins=binss,histtype='step')
-plt.hist(data_singlegaussian,bins=binss,histtype='step')
+binss = np.linspace(0, 40, 1000)
+plt.hist(data,bins=binss,histtype='step')
 plt.show()

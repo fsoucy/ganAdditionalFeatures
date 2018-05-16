@@ -41,7 +41,7 @@ def discriminator(data, reuse_variables=None):
         d_w4 = tf.get_variable('d_w4', [32, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
-        
+
         # d4 contains unscaled values
         return d4
 
@@ -61,7 +61,7 @@ def generator(z, batch_size, z_dim):
 
 tf.reset_default_graph()
 
-z_dimensions = 2
+z_dimensions = 10
 batch_size = 150
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
@@ -108,7 +108,7 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 1000
+pre_train_iterations = 700
 for i in range(pre_train_iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
@@ -117,7 +117,7 @@ for i in range(pre_train_iterations):
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch})
 
 
-iterations = 5000
+iterations = 10000
 for i in range(iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)

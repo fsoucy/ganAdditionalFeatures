@@ -23,7 +23,8 @@ import matplotlib.pyplot as plt
 # Load MNIST data
 #data = np.load('3_1.npy')
 #data = data.reshape((data.shape[0], 1))
-real_data = np.random.normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
+# real_data = np.random.normal(loc=-0.6, scale=0.7, size=10000).reshape((10000, 1))
+real_data = np.load('data.npy').reshape((12000,1))
 
 # Define the discriminator network
 def discriminator(data, reuse_variables=None):
@@ -40,7 +41,7 @@ def discriminator(data, reuse_variables=None):
         d_w4 = tf.get_variable('d_w4', [32, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
         d4 = tf.matmul(d3, d_w4) + d_b4
-        
+
         # d4 contains unscaled values
         return d4
 
@@ -161,7 +162,7 @@ with tf.Session() as sess:
 print(genOutput.mean())
 print(genOutput.std())
 smallData = real_data[0:1000, :]
-bins = np.linspace(-2, 2, 1000)
+bins = np.linspace(1, 32, 100)
 plt.hist(genOutput, bins, alpha=0.5, label='Generated')
 plt.hist(smallData, bins, alpha=0.5, label='Data')
 plt.legend(loc='upper right')

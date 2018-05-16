@@ -45,11 +45,27 @@ def create_dataset_unweighted(k,n) :
 # plt.hist(data_weighted,bins=500,histtype='step')
 # plt.show()
 
-data_singlegaussian = np.load('low_variance.npy')
-data_gen = np.load('genLowVariance.npy')
+# data_singlegaussian = np.load('low_variance.npy')
+# data_gen = np.load('genLowVariance.npy')
+#
+# plt.clf()
+# binss = np.linspace(-5, 5, 1000)
+# plt.hist(data_gen,bins=binss,histtype='step')
+# plt.hist(data_singlegaussian,bins=binss,histtype='step')
+# plt.show()
 
+means = [[1,1],[1,-1],[-1,1],[-1,-1]]
+cov = [[.05,0],[0,.05]]
+data = []
+for mean in means:
+    data.append(np.random.multivariate_normal(mean,cov,4000))
+new_dat = []
+for i in range(len(data)):
+    for j in range(len(data[i])):
+        new_dat.append(data[i][j])
+data = new_dat
+print(data)
 plt.clf()
-binss = np.linspace(-5, 5, 1000)
-plt.hist(data_gen,bins=binss,histtype='step')
-plt.hist(data_singlegaussian,bins=binss,histtype='step')
+realX, realY = [i[0] for i in data], [i[1] for i in data]
+plt.scatter(realX,realY)
 plt.show()
