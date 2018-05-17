@@ -1,18 +1,3 @@
-"""
-This is a straightforward Python implementation of a generative adversarial network.
-The code is drawn directly from the O'Reilly interactive tutorial on GANs
-(https://www.oreilly.com/learning/generative-adversarial-networks-for-beginners).
-
-A version of this model with explanatory notes is also available on GitHub
-at https://github.com/jonbruner/generative-adversarial-networks.
-
-This script requires TensorFlow and its dependencies in order to run. Please see
-the readme for guidance on installing TensorFlow.
-
-This script won't print summary statistics in the terminal during training;
-track progress and see sample images in TensorBoard.
-"""
-
 import tensorflow as tf
 import numpy as np
 import datetime
@@ -187,7 +172,7 @@ for i in range(100000):
 model_name = 'model1'
 save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
 print(model_name + " saved in path: %s" % save_path)
-        
+
 z_dimensions = 100
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
