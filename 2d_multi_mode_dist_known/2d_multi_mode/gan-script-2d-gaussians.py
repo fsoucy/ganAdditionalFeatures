@@ -131,9 +131,10 @@ sess.run(tf.global_variables_initializer())
 
 
 # Pre-train discriminator
-pre_train_iterations = 10000
+pre_train_iterations = 1000
 for i in range(pre_train_iterations):
-    print(i)
+    if (i % 50 == 0):
+        print(i)
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
     real_batch = realData[0:batch_size, :]
@@ -147,6 +148,9 @@ for i in range(pre_train_iterations):
 
 
 iterations = 50
+real_losses = []
+fake_losses = []
+gen_losses = []
 for i in range(iterations):
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
     np.random.shuffle(realData)
@@ -165,15 +169,13 @@ for i in range(iterations):
 
     # Train discriminator
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch, real_labels_placeholder: realLabels, fake_labels_placeholder: genLabels})
+    real_losses.append(dLossReal)
+    fake.append(dLossFake)
     # Train generator
-    if (i % 2) == 0:
-        for j in range(2):
-            z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-            _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch, real_labels_placeholder: realLabels, fake_labels_placeholder: genLabels})
-    else:
+    for j in range(2):
         z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-        _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch, real_labels_placeholder: realLabels, fake_labels_placeholder: genLabels})
-
+        _, gLoss = sess.run([g_trainer, g_loss], feed_dict={z_placeholder: z_batch, real_labels_placeholder: realLabels, fake_labels_placeholder: genLabels})
+    gen_losses.append(gLoss)
 
 model_name = 'modelGaussians2D'
 
@@ -206,5 +208,14 @@ def plot2D(realPoints, fakePoints, fname):
     plt.legend()
     plt.savefig(fname)
 
+def plotLosses(real_losses,fake_losses,gen_losses):
+    plt.clf()
+    plt.plot(real_losses, label = 'real loss')
+    plt.plot(fake_losses, label = 'fake loss')
+    plt.plot(gen_losses, label='generator loss')
+    plt.legend()
+    plt.savefig('loss plots')
+
 realPoints = realData[0:1000, :]
 plot2D(realPoints, genOutput, 'gen2D.png')
+plotLosses(real_losses,fake_losses,gen_losses)
