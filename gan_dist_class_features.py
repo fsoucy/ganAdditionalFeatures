@@ -4,7 +4,7 @@ import datetime
 import pdb
 import mnist_classifier
 
-
+dLossFakes, dLossReals = [], []
 
 # Load MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
@@ -32,24 +32,17 @@ def discriminator(images, labels, reuse_variables=None):
         d2 = d2 + d_b2
         d2 = tf.nn.relu(d2)
         d2 = tf.nn.avg_pool(d2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-
         #figure out what the shape of d2 is here:
-        # get the
-
         d_w3 = tf.get_variable('d_w3', [7 * 7 * 64 + 10, 1024], initializer=tf.truncated_normal_initializer(stddev=0.02))
         d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
         d3 = tf.reshape(d2, [-1, 7*7*64])
-        labels = tf.tile(labels, [50,1])
-        labels = tf.reshape(labels, [-1, 10])
-        #print('labels')
-        #print(labels.get_shape().as_list())
-        #print('d3')
-        #print(d3.get_shape().as_list())
-        labels = tf.cast(labels, tf.float32)
-        d3 = tf.concat([d3, labels],axis=1)
-        #print('after concat')
-        #print(d3.get_shape().as_list())
-        d3 = tf.reshape(d3,[-1, 7 * 7 * 64 + 10])
+        print(d3.get_shape().as_list())
+        zero_dims = tf.zeros([tf.shape(d3)[0], 10], tf.float32)
+        _labels = tf.reshape(labels, [10])
+        _labels = tf.cast(_labels, tf.float32)
+        mcs = zero_dims # + _labels
+        d3 = tf.concat([d3, mcs], axis=1)
+        print(d3.get_shape().as_list())
         d3 = tf.matmul(d3, d_w3)
         d3 = d3 + d_b3
         d3 = tf.nn.relu(d3)
@@ -109,7 +102,7 @@ def generator(z, batch_size, z_dim):
 
 
 z_dimensions = 100
-batch_size = 50
+batch_size = 100
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 # z_placeholder is for feeding input noise to the generator
 
@@ -170,7 +163,8 @@ sess.run(tf.global_variables_initializer())
 #import pretrained classifier
 
 # Pre-train discriminator
-for i in range(20000):
+
+for i in range(300):
     if (i % 10) == 0:
         print(i)
     z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
@@ -184,12 +178,17 @@ for i in range(20000):
     #print(generatedImages.shape)
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake],
                     {x_placeholder: real_image_batch, z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
+    print("dLossReal: %f, dLossFake: %f" % (dLossReal, dLossFake))
+    dLossReals.append(dLossReal)
+    dLossFakes.append(dLossFake)
 
+#np.save('classFeaturesData/preDLossFakeWithClassFeatures.npy', np.array(dLossFakes))
+#np.save('classFeaturesData/preDLossRealWithClassFeatures.npy', np.array(dLossReals))
 
-
-
+dLossFakes, dLossReals, gLosses = [], [], []
 
 iterations = 100000
+iterations = 5000
 # Train generator and discriminator together
 for i in range(iterations):
     if (i % 10) == 0:
@@ -206,20 +205,56 @@ for i in range(iterations):
     generatedImageLabels = np.reshape(generatedImageLabels, [1,10])
 
     # Train discriminator on both real and fake images
-    _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake],
-                            {x_placeholder: real_image_batch, z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
+    _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_image_batch, z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
 
+    """
     # Train generator
-    z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
-    _ = sess.run(g_trainer, feed_dict={z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
+    # Uncomment to train generator multiple iterations for each iteration of discriminator.
+    gLoss = None
+    for i in range(5):
+        z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
+        generatedImages = sess.run([Gz], {z_placeholder: z_batch})[0]
+        generatedImageLabels = mnist_classifier.summary_statistics(generatedImages.reshape([-1,784]))
+        generatedImageLabels = np.reshape(generatedImageLabels, [1,10])
+        _, gLoss = sess.run([g_trainer, g_loss], feed_dict={z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
+        real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
+        realImageLabels = mnist_classifier.summary_statistics(real_image_batch.reshape([-1, 784]))
+        realImageLabels = np.reshape(realImageLabels, [1,10])
+    """
+    _, gLoss = sess.run([g_trainer, g_loss], feed_dict={z_placeholder: z_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
 
+    dLossReals.append(dLossReal)
+    dLossFakes.append(dLossFake)
+    gLosses.append(gLoss)
     if i % 10 == 0:
+        print("dLossFake: %ff, dLossReal: %f, gLoss: %f" % (dLossFake, dLossReal, gLoss))
         # Update TensorBoard with summary statistics
         z_batch = np.random.normal(0, 1, size=[batch_size, z_dimensions])
         summary = sess.run(merged, {z_placeholder: z_batch, x_placeholder: real_image_batch, real_labels_placeholder: realImageLabels, fake_labels_placeholder: generatedImageLabels})
         # print(dLossFake)
         writer.add_summary(summary, i)
 
-model_name = 'model1_withClassFeatures_test'
+
+# np.save('classFeaturesData/dLossRealsWithClassFeaturesMod1.npy', np.array(dLossReals))
+# np.save('classFeaturesData/dLossFakesWithClassFeaturesMod1.npy', np.array(dLossFakes))
+# np.save('classFeaturesData/gLossWithClassFeaturesMod1.npy', np.array(gLosses))
+
+model_name = 'model1_withClassFeaturesTest'
 save_path = saver.save(sess, 'trained_models/' + model_name + '.ckpt')
 print(model_name + " saved in path: %s" % save_path)
+
+with tf.Session() as sess:
+    saver.restore(sess, "trained_models/" + model_name + ".ckpt")
+    print("Model restored.")
+    batch_size = 1000
+    z_dimensions = 100
+    z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
+
+    generated_image_output = generator(z_placeholder, batch_size, z_dimensions)
+    z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
+    generated_images = sess.run(generated_image_output, feed_dict={z_placeholder: z_batch})
+    generated_images = generated_images.reshape([batch_size, 28, 28])
+    for i in range(batch_size):
+        img_loc = 'generated_images_withClassFeaturesTest/genImg' + str(i) + '.npy'
+        generated_image = generated_images[i, :, :]
+        np.save(img_loc, generated_image)
