@@ -8,11 +8,11 @@ import pdb
 
 images = []
 
-x = glob.glob('generated_images_withClassFeaturesMod1/*')
+x = glob.glob('ganWithAutoencoder_model1/*')
 
 for loc in x:
     y = np.load(loc)
-    loc = 'processed_generated_images_withClassFeaturesMod1/' + loc.split('/')[1].split('.')[0] + '.npy'
+    loc = 'processed_ganWithAutoencoder_model1/' + loc.split('/')[1].split('.')[0] + '.npy'
     np.save(loc, y)
     y = np.reshape(y, [784])
     images.append(y)
@@ -44,6 +44,6 @@ def plotStats(stats):
     ax.set_xticklabels(xticklabels)
     #print(xticklabels)
     #ax.set_xticklabels(xticklabels)
-    plt.savefig('statsWithClassFeaturesMod1.png')
+    plt.savefig('statsWithClassFeaturesAuto.png')
 
 plotStats(stats)

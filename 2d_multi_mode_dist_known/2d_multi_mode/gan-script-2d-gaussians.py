@@ -129,6 +129,7 @@ sess = tf.Session()
 
 sess.run(tf.global_variables_initializer())
 
+dLossReals, dLossFakes = [], []
 
 # Pre-train discriminator
 pre_train_iterations = 10000
@@ -144,6 +145,8 @@ for i in range(pre_train_iterations):
     genLabels = np.reshape(genLabels, [-1,4])
 
     _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_batch, z_placeholder: z_batch, real_labels_placeholder: realLabels, fake_labels_placeholder: genLabels})
+    dLossFakes.append(dLossFake)
+    dLossReals.append(dLossReal)
 
 
 iterations = 50
