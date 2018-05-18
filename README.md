@@ -2,7 +2,9 @@
 
 ## Minibatch class distribution as additional feature for discriminator
 
-The files involved in training these networks are ```gan-script``` (training a normal network) and ```gan_dist_class_features.py``` (using the class distribution as additional features). ```dist.py``` is used to evaluate the class distribution of the generated images and ```mnist_classifier.py``` is used to classify MNIST images.
+The files involved in training these networks are ```gan-script.py``` (training a normal network) and ```gan_dist_class_features.py``` (using the class distribution as additional features). ```dist.py``` is used to evaluate the class distribution of the generated images and ```mnist_classifier.py``` is used to classify MNIST images. ```processImages.py``` is used to translate Numpy arrays into JPEG images.
+
+```gan_autoencoder.py``` involves my work in the using autoencoder features as input to the discriminator for the MNISt dataset. ```autoencoder.py``` and ```train_autoencoder.py``` are used to train the autoencoder. All folders beginning with ```generated/``` and ```processed_generated/``` are folders to store generated images from the resulting GANs. All ```.png``` files are generated graphs. ```trained_models/``` are used to store trained architectures. Finally, ```classFeaturesData/``` is used to store data about the evolution of loss functions through training the GANs.
 
 
 ## Testing of effects of additional features on mode collapse with Gaussian mixture distributions
