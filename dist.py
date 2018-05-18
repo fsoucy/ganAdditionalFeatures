@@ -5,14 +5,15 @@ import mnist_classifier
 import glob
 import matplotlib.pyplot as plt
 import pdb
+import scipy.stats
 
 images = []
 
-x = glob.glob('ganWithAutoencoder_model1/*')
+x = glob.glob('generated_images_withoutClassFeatures/*')
 
 for loc in x:
     y = np.load(loc)
-    loc = 'processed_ganWithAutoencoder_model1/' + loc.split('/')[1].split('.')[0] + '.npy'
+    loc = 'processed_generated_images_withoutClassFeatures/' + loc.split('/')[1].split('.')[0] + '.npy'
     np.save(loc, y)
     y = np.reshape(y, [784])
     images.append(y)
@@ -27,8 +28,11 @@ for i, prediction in enumerate(predictions):
         print(loc)
 
 print(stats)
+stats = np.array(stats)
+stats = stats / stats.sum()
+print(scipy.stats.entropy(stats))
 
-
+"""
 def plotStats(stats):
     digits = [i for i in range(10)]
     fix, ax = plt.subplots()
@@ -47,3 +51,4 @@ def plotStats(stats):
     plt.savefig('statsWithClassFeaturesAuto.png')
 
 plotStats(stats)
+"""
